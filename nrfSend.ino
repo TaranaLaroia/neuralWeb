@@ -10,7 +10,7 @@
 
 /****************** User Config ***************************/
 /***      Set this radio as radio number 0 or 1         ***/
-bool radioNumber = 0;
+bool radioNumber = 1;
 
 /* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
 RF24 radio(9,10);
@@ -19,7 +19,7 @@ RF24 radio(9,10);
 byte addresses[][6] = {"1Node","2Node"};
 
 // Used to control whether this node is sending or receiving
-bool role = 0;
+bool role = 1;
 
 void setup() {
   Serial.begin(115200);
@@ -49,8 +49,6 @@ void loop() {
   
   
 /****************** Ping Out Role ***************************/  
-
-/*
 if (role == 1)  {
     
     radio.stopListening();                                    // First, stop listening so we can talk.
@@ -58,9 +56,10 @@ if (role == 1)  {
     
     Serial.println(F("Now sending"));
 
-    unsigned long time = 32;//micros();                             // Take the time, and send it.  This will block until complete
-     if (!radio.write( &time, sizeof(unsigned long) )){
-       Serial.println(F("size failed"));
+    unsigned long time = micros();                             // Take the time, and send it.  This will block until complete
+    unsigned long test=6;
+     if (!radio.write( &test, sizeof(unsigned long) )){
+       Serial.println(F("failed to write"));
      }
         
     radio.startListening();                                    // Now, continue listening
@@ -69,7 +68,7 @@ if (role == 1)  {
     boolean timeout = false;                                   // Set up a variable to indicate if a response was received or not
     
     while ( ! radio.available() ){                             // While nothing is received
-      if (micros() - started_waiting_at > 800000 ){            // If waited longer than 200ms, indicate timeout and exit while loop
+      if (micros() - started_waiting_at > 200000 ){            // If waited longer than 200ms, indicate timeout and exit while loop
           timeout = true;
           break;
       }      
@@ -78,14 +77,20 @@ if (role == 1)  {
     if ( timeout ){                                             // Describe the results
         Serial.println(F("Failed, response timed out."));
     }else{
-        unsigned long got_time;                                 // Grab the response, compare, and send to debugging spew
-        radio.read( &got_time, sizeof(unsigned long) );
+        unsigned long got_time=micros();
+        unsigned long returnTest;
+        // Grab the response, compare, and send to debugging spew
+        radio.read( &returnTest, sizeof(unsigned long) );
         unsigned long time = micros();
         
         // Spew it
         Serial.print(F("Sent "));
+        Serial.print(test);
+        Serial.print(F(" at time "));
         Serial.print(time);
         Serial.print(F(", Got response "));
+        Serial.print(returnTest);
+        Serial.print(F(" at time "));
         Serial.print(got_time);
         Serial.print(F(", Round-trip delay "));
         Serial.print(time-got_time);
@@ -93,33 +98,32 @@ if (role == 1)  {
     }
 
     // Try again 1s later
-    delay(20);
+    delay(2000);
   }
-*/
+
 
 
 /****************** Pong Back Role ***************************/
-
+/*
   if ( role == 0 )
   {
     unsigned long got_time;
-    unsigned long test;
     
     if( radio.available()){
                                                                     // Variable for the received timestamp
       while (radio.available()) {                                   // While there is data ready
-        radio.read( &test, sizeof(unsigned long) );             // Get the payload
+        radio.read( &got_time, sizeof(unsigned long) );             // Get the payload
       }
      
       radio.stopListening();                                        // First, stop listening so we can talk   
-      radio.write( &test, sizeof(unsigned long) );              // Send the final one back.      
+      radio.write( &got_time, sizeof(unsigned long) );              // Send the final one back.      
       radio.startListening();                                       // Now, resume listening so we catch the next packets.     
       Serial.print(F("Sent response "));
-      Serial.println(test);  
+      Serial.println(got_time);  
    }
  }
 
-
+*/
 
 
 /****************** Change Roles via Serial Commands ***************************/
